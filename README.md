@@ -25,6 +25,10 @@ npm install
 npm run dev
 ```
 
+## 预览
+
+https://sxlisme.github.io/image-preview/
+
 ## 部署
 
 推送到 GitHub main 分支后自动部署到 GitHub Pages：
