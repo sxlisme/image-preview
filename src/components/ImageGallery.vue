@@ -75,7 +75,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['open-fullscreen'])
+const emit = defineEmits(['open-fullscreen', 'update-images'])
 
 const fileInputRef = ref(null)
 const folderInputRef = ref(null)
@@ -101,16 +101,17 @@ const handleFolderSelect = (event) => {
 }
 
 const processFiles = (files) => {
+  const newImages = []
   files.forEach(file => {
     if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file)
-      props.images.push({
+      newImages.push({
         name: file.name,
-        url: url,
+        url: URL.createObjectURL(file),
         file: file
       })
     }
   })
+  emit('update-images', newImages)
 }
 </script>
 

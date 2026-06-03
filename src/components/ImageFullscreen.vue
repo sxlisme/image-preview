@@ -166,28 +166,33 @@ const startSpectrumAnimation = () => {
 
   const canvas = spectrumCanvas.value
   const ctx = canvas.getContext('2d')
-  const barCount = 32
+  const barCount = 24
   const barWidth = canvas.width / barCount - 2
+  let lastTime = 0
+  const targetFPS = 30
+  const interval = 1000 / targetFPS
 
-  const draw = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  const draw = (timestamp) => {
+    if (timestamp - lastTime >= interval) {
+      lastTime = timestamp
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    for (let i = 0; i < barCount; i++) {
-      const height = Math.random() * canvas.height * 0.8 + canvas.height * 0.1
-      const hue = (i / barCount) * 60 + 120
-      ctx.fillStyle = `hsl(${hue}, 80%, 60%)`
-      ctx.fillRect(
-        i * (barWidth + 2) + 1,
-        canvas.height - height,
-        barWidth,
-        height
-      )
+      for (let i = 0; i < barCount; i++) {
+        const height = Math.random() * canvas.height * 0.8 + canvas.height * 0.1
+        const hue = (i / barCount) * 60 + 120
+        ctx.fillStyle = `hsl(${hue}, 80%, 60%)`
+        ctx.fillRect(
+          i * (barWidth + 2) + 1,
+          canvas.height - height,
+          barWidth,
+          height
+        )
+      }
     }
-
     animationId = requestAnimationFrame(draw)
   }
 
-  draw()
+  draw(0)
 }
 
 const stopSpectrumAnimation = () => {
@@ -253,6 +258,8 @@ watch(currentIndex, () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .fullscreen-image.blur {

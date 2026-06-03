@@ -26,6 +26,7 @@
           :images="images"
           :advancedConfig="advancedConfig"
           @open-fullscreen="handleOpenFullscreen"
+          @update-images="handleAddImages"
         />
       </a-tab-pane>
       <a-tab-pane key="advanced" tab="高级">
@@ -76,6 +77,10 @@ const handleOpenFullscreen = (index) => {
 
 const handleCloseFullscreen = () => {
   fullscreenVisible.value = false
+}
+
+const handleAddImages = (newImages) => {
+  images.value = [...images.value, ...newImages]
 }
 
 const handleUpdateAdvancedConfig = (config) => {
