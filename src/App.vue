@@ -62,8 +62,7 @@ const advancedConfig = ref({
   text: 'essential;',
   textColor: '#ffffff',
   fontFamily: 'Palatino Linotype',
-  fontSize: 150,
-  showSpectrum: false
+  fontSize: 150
 })
 
 const toggleTheme = () => {

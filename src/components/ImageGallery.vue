@@ -47,7 +47,7 @@
         @click="$emit('open-fullscreen', index)"
       >
         <img
-          :src="img.url"
+          :src="img.thumbUrl || img.url"
           :alt="img.name"
           class="thumbnail"
           loading="lazy"
@@ -104,9 +104,11 @@ const processFiles = (files) => {
   const newImages = []
   files.forEach(file => {
     if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file)
       newImages.push({
         name: file.name,
-        url: URL.createObjectURL(file),
+        url: url,
+        thumbUrl: url,
         file: file
       })
     }

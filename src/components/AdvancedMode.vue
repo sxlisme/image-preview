@@ -60,12 +60,6 @@
             </a-form-item>
 
             <a-form-item>
-              <a-checkbox v-model:checked="localConfig.showSpectrum" class="custom-checkbox">
-                显示频谱
-              </a-checkbox>
-            </a-form-item>
-
-            <a-form-item>
               <a-checkbox v-model:checked="localConfig.blurEffect" class="custom-checkbox">
                 毛玻璃效果
               </a-checkbox>
@@ -94,9 +88,6 @@
                 >
                   {{ localConfig.text }}
                 </div>
-                <div v-if="localConfig.showSpectrum" class="preview-spectrum">
-                  <canvas ref="previewCanvas" width="200" height="60"></canvas>
-                </div>
               </div>
             </div>
             <div v-else class="preview-empty">
@@ -123,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch } from 'vue'
 import { PictureOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 
 const props = defineProps({
@@ -144,13 +135,10 @@ const localConfig = ref({
   textColor: props.config.textColor || '#ffffff',
   fontFamily: props.config.fontFamily || 'Palatino Linotype',
   fontSize: props.config.fontSize || 150,
-  showSpectrum: props.config.showSpectrum !== undefined ? props.config.showSpectrum : false,
   blurEffect: props.config.blurEffect || false
 })
 
 const currentPreviewIndex = ref(0)
-const previewCanvas = ref(null)
-let animationId = null
 
 const quickTags = ['essential;', 'playlist.', 'GAME OVER']
 
@@ -181,9 +169,7 @@ watch(() => props.config, (val) => {
   }
 }, { deep: true })
 
-watch(currentPreviewIndex, () => {
-  nextTick(startPreviewSpectrum)
-})
+watch(currentPreviewIndex, () => {})
 
 const prevPreview = () => {
   if (currentPreviewIndex.value > 0) {
@@ -196,52 +182,6 @@ const nextPreview = () => {
     currentPreviewIndex.value++
   }
 }
-
-const startPreviewSpectrum = () => {
-  if (!previewCanvas.value || !localConfig.value.showSpectrum) return
-
-  const canvas = previewCanvas.value
-  const ctx = canvas.getContext('2d')
-  const barCount = 20
-  const barWidth = canvas.width / barCount - 2
-
-  const draw = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    for (let i = 0; i < barCount; i++) {
-      const height = Math.random() * canvas.height * 0.7 + canvas.height * 0.2
-      const hue = (i / barCount) * 60 + 120
-      ctx.fillStyle = `hsl(${hue}, 80%, 60%)`
-      ctx.fillRect(
-        i * (barWidth + 2) + 1,
-        canvas.height - height,
-        barWidth,
-        height
-      )
-    }
-
-    animationId = requestAnimationFrame(draw)
-  }
-
-  draw()
-}
-
-const stopPreviewSpectrum = () => {
-  if (animationId) {
-    cancelAnimationFrame(animationId)
-    animationId = null
-  }
-}
-
-onMounted(() => {
-  if (localConfig.value.showSpectrum) {
-    nextTick(startPreviewSpectrum)
-  }
-})
-
-onUnmounted(() => {
-  stopPreviewSpectrum()
-})
 </script>
 
 <style scoped>
@@ -449,11 +389,6 @@ onUnmounted(() => {
 
 .preview-text {
   margin-bottom: 10px;
-}
-
-.preview-spectrum canvas {
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.6);
 }
 
 .preview-empty {

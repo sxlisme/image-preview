@@ -8,22 +8,16 @@
       @keydown="handleKeyDown"
       tabindex="0"
     >
+      <div
+        class="fullscreen-bg"
+        :style="{ backgroundImage: `url(${currentImage?.url})` }"
+      ></div>
       <div class="fullscreen-content" @click.stop>
-        <div class="image-container">
-          <img
-            v-if="currentImage"
-            :src="currentImage.url"
-            :alt="currentImage.name"
-            class="fullscreen-image"
-            :class="{ blur: config.blurEffect }"
-          />
-          <div class="nav-area left" @click.stop="prevImage"></div>
-          <div class="nav-area right" @click.stop="nextImage"></div>
-        </div>
+        <div class="nav-area left" @click.stop="prevImage"></div>
+        <div class="nav-area right" @click.stop="nextImage"></div>
 
-        <div v-if="currentImage && (config.text || config.showSpectrum)" class="overlay-content">
+        <div v-if="currentImage && config.text" class="overlay-content">
           <div
-            v-if="config.text"
             class="overlay-text"
             :style="{
               color: config.textColor,
@@ -33,9 +27,6 @@
           >
             {{ config.text }}
           </div>
-          <div v-if="config.showSpectrum" class="overlay-spectrum">
-            <canvas ref="spectrumCanvas" :width="scaledCanvasWidth" height="60"></canvas>
-          </div>
         </div>
       </div>
     </div>
@@ -43,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 
 const props = defineProps({
   visible: Boolean,
@@ -64,7 +55,6 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const overlayRef = ref(null)
-const spectrumCanvas = ref(null)
 const windowWidth = ref(window.innerWidth)
 const currentIndex = ref(0)
 
@@ -78,19 +68,12 @@ const scaledFontSize = computed(() => {
   return Math.round(props.config.fontSize * scale)
 })
 
-const scaledCanvasWidth = computed(() => {
-  const baseWidth = 1280
-  const scale = windowWidth.value / baseWidth
-  return Math.round(300 * scale)
-})
-
 onMounted(() => {
   window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  stopSpectrumAnimation()
   document.body.style.overflow = ''
 })
 
@@ -106,15 +89,10 @@ watch(() => props.visible, async (val) => {
     nextTick(() => {
       overlayRef.value?.focus()
       enterFullscreen()
-
-      if (props.config.showSpectrum) {
-        startSpectrumAnimation()
-      }
     })
   } else {
     document.body.style.overflow = ''
     exitFullscreen()
-    stopSpectrumAnimation()
   }
 })
 
@@ -158,68 +136,6 @@ const handleKeyDown = (e) => {
 const handleClose = () => {
   emit('close')
 }
-
-let animationId = null
-
-const startSpectrumAnimation = () => {
-  if (!spectrumCanvas.value) return
-
-  const canvas = spectrumCanvas.value
-  const ctx = canvas.getContext('2d')
-  const barCount = 24
-  const barWidth = canvas.width / barCount - 2
-  let lastTime = 0
-  const targetFPS = 30
-  const interval = 1000 / targetFPS
-
-  const draw = (timestamp) => {
-    if (timestamp - lastTime >= interval) {
-      lastTime = timestamp
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      for (let i = 0; i < barCount; i++) {
-        const height = Math.random() * canvas.height * 0.8 + canvas.height * 0.1
-        const hue = (i / barCount) * 60 + 120
-        ctx.fillStyle = `hsl(${hue}, 80%, 60%)`
-        ctx.fillRect(
-          i * (barWidth + 2) + 1,
-          canvas.height - height,
-          barWidth,
-          height
-        )
-      }
-    }
-    animationId = requestAnimationFrame(draw)
-  }
-
-  draw(0)
-}
-
-const stopSpectrumAnimation = () => {
-  if (animationId) {
-    cancelAnimationFrame(animationId)
-    animationId = null
-  }
-}
-
-watch(() => props.config.showSpectrum, (val) => {
-  if (props.visible) {
-    if (val) {
-      nextTick(startSpectrumAnimation)
-    } else {
-      stopSpectrumAnimation()
-    }
-  }
-})
-
-watch(currentIndex, () => {
-  nextTick(() => {
-    if (props.config.showSpectrum) {
-      stopSpectrumAnimation()
-      startSpectrumAnimation()
-    }
-  })
-})
 </script>
 
 <style scoped>
@@ -237,6 +153,17 @@ watch(currentIndex, () => {
   outline: none;
 }
 
+.fullscreen-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .fullscreen-content {
   position: relative;
   width: 100%;
@@ -244,27 +171,7 @@ watch(currentIndex, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.image-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.fullscreen-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  will-change: transform;
-  backface-visibility: hidden;
-}
-
-.fullscreen-image.blur {
-  filter: blur(12px);
-  transform: scale(1.05);
+  z-index: 1;
 }
 
 .nav-area {
@@ -293,15 +200,6 @@ watch(currentIndex, () => {
 }
 
 .overlay-text {
-  margin-bottom: 20px;
-}
-
-.overlay-spectrum {
-  margin-top: 20px;
-}
-
-.overlay-spectrum canvas {
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 }
 </style>
