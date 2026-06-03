@@ -10,7 +10,10 @@
     >
       <div
         class="fullscreen-bg"
-        :style="{ backgroundImage: `url(${currentImage?.url})` }"
+        :style="{
+          backgroundImage: `url(${currentImage?.url})`,
+          filter: config.blurEffect ? `blur(${config.blurAmount}px)` : 'none'
+        }"
       ></div>
       <div class="fullscreen-content" @click.stop>
         <div class="nav-area left" @click.stop="prevImage"></div>
@@ -70,15 +73,23 @@ const scaledFontSize = computed(() => {
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
   document.body.style.overflow = ''
 })
 
 const handleResize = () => {
   windowWidth.value = window.innerWidth
+}
+
+const handleFullscreenChange = () => {
+  if (!document.fullscreenElement && props.visible) {
+    emit('close')
+  }
 }
 
 watch(() => props.visible, async (val) => {
@@ -159,7 +170,7 @@ const handleClose = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-size: contain;
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -200,6 +211,5 @@ const handleClose = () => {
 }
 
 .overlay-text {
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 }
 </style>

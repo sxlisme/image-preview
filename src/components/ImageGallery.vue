@@ -52,8 +52,9 @@
           class="thumbnail"
           loading="lazy"
         />
-        <div class="thumbnail-overlay">
+        <div class="thumbnail-info">
           <span class="thumbnail-name">{{ img.name }}</span>
+          <span class="thumbnail-meta">{{ img.width }} × {{ img.height }} · {{ formatSize(img.size) }}</span>
         </div>
       </div>
     </div>
@@ -88,6 +89,15 @@ const triggerFolderOpen = () => {
   folderInputRef.value?.click()
 }
 
+const scrollToImage = (index) => {
+  const wrapper = document.querySelectorAll('.thumbnail-wrapper')[index]
+  if (wrapper) {
+    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
+
+defineExpose({ scrollToImage })
+
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files)
   processFiles(files)
@@ -100,20 +110,54 @@ const handleFolderSelect = (event) => {
   event.target.value = ''
 }
 
+const formatSize = (bytes) => {
+  if (!bytes) return ''
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
 const processFiles = (files) => {
+  let loadedCount = 0
   const newImages = []
+
   files.forEach(file => {
     if (file.type.startsWith('image/')) {
       const url = URL.createObjectURL(file)
-      newImages.push({
-        name: file.name,
-        url: url,
-        thumbUrl: url,
-        file: file
-      })
+      const img = new Image()
+      img.src = url
+      img.onload = () => {
+        newImages.push({
+          name: file.name,
+          url: url,
+          thumbUrl: url,
+          file: file,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          size: file.size
+        })
+        loadedCount++
+        if (loadedCount === files.filter(f => f.type.startsWith('image/')).length) {
+          emit('update-images', newImages)
+        }
+      }
+      img.onerror = () => {
+        newImages.push({
+          name: file.name,
+          url: url,
+          thumbUrl: url,
+          file: file,
+          width: 0,
+          height: 0,
+          size: file.size
+        })
+        loadedCount++
+        if (loadedCount === files.filter(f => f.type.startsWith('image/')).length) {
+          emit('update-images', newImages)
+        }
+      }
     }
   })
-  emit('update-images', newImages)
 }
 </script>
 
@@ -190,13 +234,13 @@ const processFiles = (files) => {
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
 .thumbnail-wrapper {
   position: relative;
-  height: 280px;
+  aspect-ratio: 16 / 9;
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
@@ -205,8 +249,8 @@ const processFiles = (files) => {
 }
 
 .thumbnail-wrapper:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
 .thumbnail {
@@ -220,27 +264,35 @@ const processFiles = (files) => {
   transform: scale(1.05);
 }
 
-.thumbnail-overlay {
+.thumbnail-info {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  padding: 40px 16px 16px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.thumbnail-wrapper:hover .thumbnail-overlay {
-  opacity: 1;
+  padding: 40px 8px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 
 .thumbnail-name {
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   display: block;
+  flex: 1;
+  padding-right: 8px;
+}
+
+.thumbnail-meta {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 </style>

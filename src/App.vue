@@ -23,6 +23,7 @@
     <a-tabs v-model:activeKey="activeTab" class="main-tabs">
       <a-tab-pane key="gallery" tab="全部图片">
         <ImageGallery
+          ref="galleryRef"
           :images="images"
           :advancedConfig="advancedConfig"
           @open-fullscreen="handleOpenFullscreen"
@@ -44,6 +45,10 @@
       :config="advancedConfig"
       @close="handleCloseFullscreen"
     />
+
+    <Teleport to="body">
+      <div v-if="flashVisible" class="flash-overlay" :style="flashStyle"></div>
+    </Teleport>
   </div>
 </template>
 
@@ -58,11 +63,17 @@ const activeTab = ref('gallery')
 const images = ref([])
 const fullscreenVisible = ref(false)
 const fullscreenIndex = ref(0)
+const galleryRef = ref(null)
+let savedScrollTop = 0
+const flashVisible = ref(false)
+const flashStyle = ref({})
 const advancedConfig = ref({
   text: 'essential;',
   textColor: '#ffffff',
   fontFamily: 'Palatino Linotype',
-  fontSize: 150
+  fontSize: 150,
+  blurEffect: false,
+  blurAmount: 20
 })
 
 const toggleTheme = () => {
@@ -70,12 +81,26 @@ const toggleTheme = () => {
 }
 
 const handleOpenFullscreen = (index) => {
+  savedScrollTop = window.scrollY
   fullscreenIndex.value = index
   fullscreenVisible.value = true
 }
 
 const handleCloseFullscreen = () => {
+  const currentImage = images.value[fullscreenIndex.value]
+  flashStyle.value = {
+    backgroundImage: `url(${currentImage?.url})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center'
+  }
+  flashVisible.value = true
   fullscreenVisible.value = false
+  setTimeout(() => {
+    window.scrollTo({ top: savedScrollTop, behavior: 'auto' })
+    setTimeout(() => {
+      flashVisible.value = false
+    }, 400)
+  }, 50)
 }
 
 const handleAddImages = (newImages) => {
@@ -189,6 +214,26 @@ const handleUpdateAdvancedConfig = (config) => {
 
   .app-title {
     font-size: 22px;
+  }
+}
+
+.flash-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  pointer-events: none;
+  animation: flashFade 1s ease-out forwards;
+}
+
+@keyframes flashFade {
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
   }
 }
 </style>

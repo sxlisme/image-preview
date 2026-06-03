@@ -64,6 +64,17 @@
                 毛玻璃效果
               </a-checkbox>
             </a-form-item>
+
+            <a-form-item v-if="localConfig.blurEffect" label="模糊程度">
+              <div class="slider-wrapper">
+                <a-slider
+                  v-model:value="localConfig.blurAmount"
+                  :min="5"
+                  :max="50"
+                />
+                <span class="size-value">{{ localConfig.blurAmount }}px</span>
+              </div>
+            </a-form-item>
           </a-form>
         </a-card>
       </a-col>
@@ -75,7 +86,12 @@
           </template>
           <div class="preview-container">
             <div class="preview-16-9" v-if="images.length > 0">
-              <img :src="images[currentPreviewIndex].url" alt="preview" :class="{ blur: localConfig.blurEffect }" />
+              <img
+                :src="images[currentPreviewIndex].url"
+                alt="preview"
+                class="preview-img"
+                :style="localConfig.blurEffect ? { filter: `blur(${localConfig.blurAmount}px)`, transform: 'scale(1.05)' } : {}"
+              />
               <div class="preview-overlay">
                 <div
                   v-if="localConfig.text"
@@ -135,7 +151,8 @@ const localConfig = ref({
   textColor: props.config.textColor || '#ffffff',
   fontFamily: props.config.fontFamily || 'Palatino Linotype',
   fontSize: props.config.fontSize || 150,
-  blurEffect: props.config.blurEffect || false
+  blurEffect: props.config.blurEffect || false,
+  blurAmount: props.config.blurAmount || 20
 })
 
 const currentPreviewIndex = ref(0)
@@ -373,9 +390,10 @@ const nextPreview = () => {
   object-fit: contain;
 }
 
-.preview-16-9 img.blur {
-  filter: blur(8px);
-  transform: scale(1.05);
+.preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .preview-overlay {
