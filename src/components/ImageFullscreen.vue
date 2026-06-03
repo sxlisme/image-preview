@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
+import { ref, computed, watch, onUnmounted, onMounted, nextTick } from 'vue'
 
 const props = defineProps({
   visible: Boolean,
